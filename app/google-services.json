@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "14410776329",
+    "firebase_url": "https://envisionocr.firebaseio.com",
+    "project_id": "envisionocr",
+    "storage_bucket": "envisionocr.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:14410776329:android:fbb6f7009db10c91",
+        "android_client_info": {
+          "package_name": "com.jjoey.envisionocr"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "14410776329-9ldjhk8la3rtr8p7itm0cotacu459t1p.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.jjoey.envisionocr",
+            "certificate_hash": "a25360c6e47fb3dd4f2003abc7135e7f773b449b"
+          }
+        },
+        {
+          "client_id": "14410776329-dr0epf6fpgboe9hs5gt3vflp7sssbp3n.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDvrkyaWutJk4L_R2uXK9fGKOyCNmBbZhM"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "14410776329-dr0epf6fpgboe9hs5gt3vflp7sssbp3n.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
