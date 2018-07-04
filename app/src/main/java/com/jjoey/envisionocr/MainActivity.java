@@ -8,12 +8,12 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Matrix;
 import android.hardware.Camera;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -29,13 +29,22 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.ml.vision.FirebaseVision;
+import com.google.firebase.ml.vision.common.FirebaseVisionImage;
+import com.google.firebase.ml.vision.text.FirebaseVisionText;
+import com.google.firebase.ml.vision.text.FirebaseVisionTextDetector;
+import com.jjoey.envisionocr.utils.Utils;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.sql.Array;
 import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 public class MainActivity extends AppCompatActivity implements SurfaceHolder.Callback {
@@ -44,12 +53,16 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
 
     private SurfaceView surfaceView;
     private SurfaceHolder holder;
-    private ImageView captureImgBtn;
+    private ImageView captureImgBtn, img;
     private Camera camera;
     private int rotation = 0;
 
     public static final int REQ_CAMERA = 102;
     private int cameraType;
+
+    private FirebaseVisionImage visionImage;
+    private String content;
+    private String text = null;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -71,21 +84,51 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
     private Camera.PictureCallback mPictureCallback = new Camera.PictureCallback() {
         @Override
         public void onPictureTaken(byte[] bytes, Camera camera) {
-            try {
-                String filePath = new SavePhotoAsync().execute(bytes).get();
 
-                Intent intent = new Intent(MainActivity.this, PreviewActivity.class);
-                intent.putExtra("image_path", filePath);
-                startActivity(intent);
-                Log.d(TAG, "Path:\t" + filePath);
+            Bitmap bitmap = Utils.byteArraytoBitmap(bytes);
+            visionImage = FirebaseVisionImage.fromBitmap(bitmap);
+//            img.setImageBitmap(bitmap);
+            FirebaseVisionTextDetector textDetector = FirebaseVision.getInstance().getVisionTextDetector();
+            textDetector.detectInImage(visionImage)
+                    .addOnSuccessListener(new OnSuccessListener<FirebaseVisionText>() {
+                        @Override
+                        public void onSuccess(FirebaseVisionText firebaseVisionText) {
+                            processText(firebaseVisionText);
+                            new Handler().postDelayed(new Runnable() {
+                                @Override
+                                public void run() {
+//                                    img.setVisibility(View.GONE);
+                                    refreshCamera();
+                                }
+                            }, 5000);
+                        }
+                    }).addOnFailureListener(new OnFailureListener() {
+                @Override
+                public void onFailure(@NonNull Exception e) {
 
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } catch (ExecutionException e) {
-                e.printStackTrace();
-            }
+                }
+            });
         }
     };
+
+    private void processText(FirebaseVisionText visionText) {
+        for (FirebaseVisionText.Block block : visionText.getBlocks()) {
+            text = text + block.getText();
+            if (!text.equals("")) {
+                Log.d(TAG, "Text Found:\t" + text);
+                Toast.makeText(this, "text found:\t" + text, Toast.LENGTH_SHORT).show();
+
+                Intent intent = new Intent(MainActivity.this, PreviewActivity.class);
+                intent.putExtra("text_found", text);
+                startActivity(intent);
+
+                Log.d(TAG, "Text Found:\t" + text);
+            } else {
+                Log.d(TAG, "No Text Found:\t" + text);
+                Toast.makeText(this, "No text found:\t" + text, Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
 
     public static void setCameraDisplayOrientation(Activity activity, int cameraId, android.hardware.Camera camera) {
         android.hardware.Camera.CameraInfo info = new android.hardware.Camera.CameraInfo();
@@ -119,7 +162,7 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
 
     @TargetApi(23)
     private void checkPerms() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED || ContextCompat.checkSelfPermission(this,  Manifest.permission.WRITE_EXTERNAL_STORAGE ) != PackageManager.PERMISSION_GRANTED) {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED || ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             askPerms();
         } else {
             startCamera();
@@ -155,6 +198,7 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
     private void initViews() {
         surfaceView = findViewById(R.id.surfaceView);
         captureImgBtn = findViewById(R.id.captureImgBtn);
+//        img = findViewById(R.id.img);
     }
 
     private void refreshCamera() {
@@ -239,24 +283,17 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
         protected String doInBackground(byte[]... bytes) {
             // convert byte array into bitmap
             Bitmap loadedImage = null;
-            Bitmap rotatedBitmap = null;
             loadedImage = BitmapFactory.decodeByteArray(bytes[0], 0,
                     bytes[0].length);
 
-            // rotate Image
-            Matrix rotateMatrix = new Matrix();
-            rotateMatrix.postRotate(rotation);
-            rotatedBitmap = Bitmap.createBitmap(loadedImage, 0, 0,
-                    loadedImage.getWidth(), loadedImage.getHeight(),
-                    rotateMatrix, false);
             String state = Environment.getExternalStorageState();
             File folder = null;
             if (state.contains(Environment.MEDIA_MOUNTED)) {
                 folder = new File(Environment
-                        .getExternalStorageDirectory() + "/ThumbsApp");
+                        .getExternalStorageDirectory() + "/EnVisionOCR");
             } else {
                 folder = new File(Environment
-                        .getExternalStorageDirectory() + "/ThumbsApp");
+                        .getExternalStorageDirectory() + "/EnVisionOCR");
                 //.getExternalStorageDirectory() + getPackageName());
             }
 
@@ -277,28 +314,13 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
                     e.printStackTrace();
                 }
 
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        Toast.makeText(getBaseContext(), "Image Saved",
-                                Toast.LENGTH_LONG).show();
-                    }
-                });
-
             } else {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        Toast.makeText(getBaseContext(), "Image Not saved",
-                                Toast.LENGTH_LONG).show();
-                    }
-                });
                 return null;
             }
 
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             // save testImage into gallery
-            rotatedBitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+            loadedImage.compress(Bitmap.CompressFormat.JPEG, 100, baos);
 
             FileOutputStream fout = null;
             try {

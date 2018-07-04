@@ -6,14 +6,61 @@
     android:layout_height="match_parent"
     tools:context=".PreviewActivity">
 
-    <TextView
-        android:id="@+id/textView"
-        android:layout_width="wrap_content"
+    <android.support.v7.widget.Toolbar
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        tools:text="Lorem ipsum dolor sit amet"
-        android:inputType="textMultiLine|textLongMessage"
-        android:textSize="23sp"
-        android:layout_margin="20dp"
-        android:layout_centerInParent="true"/>
+        android:minHeight="?android:attr/actionBarSize"
+        android:id="@+id/toolbar"
+        android:background="@color/colorPrimary">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <ImageView
+                android:id="@+id/backIV"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/back"
+                android:padding="10dp"
+                android:layout_alignParentLeft="true"
+                android:layout_centerVertical="true"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Recognition Results"
+                android:textColor="@android:color/white"
+                android:textSize="18sp"
+                android:fontFamily="sans-serif-condensed"
+                android:layout_centerVertical="true"
+                android:layout_centerHorizontal="true"/>
+
+        </RelativeLayout>
+
+    </android.support.v7.widget.Toolbar>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/toolbar">
+
+        <ImageView
+            android:id="@+id/imageView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"/>
+
+        <TextView
+            android:id="@+id/textView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            tools:text="Lorem ipsum dolor sit amet"
+            android:inputType="textMultiLine|textLongMessage"
+            android:textSize="23sp"
+            android:layout_margin="20dp"
+            android:layout_centerInParent="true"/>
+
+    </RelativeLayout>
 
 </RelativeLayout>
